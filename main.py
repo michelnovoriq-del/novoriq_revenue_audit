@@ -64,7 +64,6 @@ async def handle_call_tool(name: str, arguments: dict) -> list[TextContent]:
         amount = arguments.get("dispute_amount", 0)
         evidence = arguments.get("evidence_types_available", [])
         
-        # Deterministic scoring logic
         score = len(evidence) * 20
         status = "HIGH PROBABILITY" if score >= 60 else "MODERATE PROBABILITY" if score >= 40 else "LOW PROBABILITY / HIGH RISK"
         
@@ -110,8 +109,8 @@ async def handle_call_tool(name: str, arguments: dict) -> list[TextContent]:
 @app.get("/")
 @app.get("/.well-known/mcp/server-card.json")
 def get_server_card():
-    # Update this once Render provisions your URL
-    BASE_URL = "https://novoriq-free-audit.onrender.com" 
+    # HARDCODED LIVE RENDER URL
+    BASE_URL = "https://novoriq-revenue-audit-nxjk.onrender.com" 
     
     return JSONResponse(content={
         "$schema": "https://modelcontextprotocol.io/schemas/server-card/v1.0",
