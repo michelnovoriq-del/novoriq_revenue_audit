@@ -6,7 +6,8 @@ from mcp.server.sse import SseServerTransport
 from mcp.types import Tool, TextContent
 import uvicorn
 import uuid
-import anyio
+import asyncio
+import os
 
 app = FastAPI()
 
@@ -124,7 +125,7 @@ def get_server_card():
         "security": { "credentialsRequired": False, "authentication": "none" }
     })
 
-# 5. SSE Connections (Omnivorous)
+# 5. SSE Connections (Native Asyncio)
 @app.api_route("/sse", methods=["GET", "POST", "HEAD"])
 async def sse_endpoint(request: Request):
     session_id = str(uuid.uuid4())
@@ -132,11 +133,14 @@ async def sse_endpoint(request: Request):
     transports[session_id] = transport
     
     async def handle_disconnect():
-        await request.is_disconnected()
-        transports.pop(session_id, None)
+        while True:
+            if await request.is_disconnected():
+                transports.pop(session_id, None)
+                break
+            await asyncio.sleep(1)
 
-    anyio.create_task_group().start_soon(handle_disconnect)
-    anyio.create_task_group().start_soon(mcp.run, transport, mcp.create_initialization_options())
+    asyncio.create_task(handle_disconnect())
+    asyncio.create_task(mcp.run(transport, mcp.create_initialization_options()))
     
     return await transport.handle_sse(request)
 
@@ -152,4 +156,6 @@ def health_check():
     return {"status": "ok"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=3000)
+    # Natively pull the OS Port assigned by Render, default to 3000 locally
+    port = int(os.environ.get("PORT", 3000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
