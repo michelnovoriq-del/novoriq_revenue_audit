@@ -105,11 +105,10 @@ async def handle_call_tool(name: str, arguments: dict) -> list[TextContent]:
         
     raise ValueError(f"Unknown tool: {name}")
 
-# 4. The 404-Proof Discovery Route
-@app.get("/")
-@app.get("/.well-known/mcp/server-card.json")
+# 4. The 405-Proof Discovery Route (Omnivorous)
+@app.api_route("/", methods=["GET", "POST", "HEAD"])
+@app.api_route("/.well-known/mcp/server-card.json", methods=["GET", "POST", "HEAD"])
 def get_server_card():
-    # HARDCODED LIVE RENDER URL
     BASE_URL = "https://novoriq-revenue-audit-nxjk.onrender.com" 
     
     return JSONResponse(content={
@@ -125,8 +124,8 @@ def get_server_card():
         "security": { "credentialsRequired": False, "authentication": "none" }
     })
 
-# 5. SSE Connections
-@app.get("/sse")
+# 5. SSE Connections (Omnivorous)
+@app.api_route("/sse", methods=["GET", "POST", "HEAD"])
 async def sse_endpoint(request: Request):
     session_id = str(uuid.uuid4())
     transport = SseServerTransport(f"/messages/{session_id}")
